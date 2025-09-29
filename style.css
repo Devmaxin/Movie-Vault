@@ -91,8 +91,12 @@ header.shadow .logo{
 
 .navbar a{
     font-size: 1rem;
-    font-weight: 500;
-    color: var(--bg-color);
+    font-weight: 800;
+    color: rgb(53, 51, 51);
+}
+
+.navbar a:hover{
+    color: var(--main-color);
 }
 
 .navbar a::after{
@@ -109,6 +113,7 @@ header.shadow .logo{
 .navbar a:hover::after,
 .navbar .home-active::after{
     width: 100%;
+    
 }
 
 #menu-icon{
