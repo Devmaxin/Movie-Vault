@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movie Vault</title>
+    <link rel="icon" type="image/png" href="img/movie-play .png">
     <link rel="stylesheet" href="style.css">
      <!-- Box icons -->
      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
@@ -29,9 +30,9 @@
         <!-- menu -->
         <ul class="navbar" id="nav-menu">
          <li><a href="#home" class="home-active">Home</a></li>
+         <li><a href="#trending">Trending</a></li>
          <li><a href="#movies">Movies</a></li>
          <li><a href="#animes">Anime</a></li> 
-         <li><a href="#coming">Soon</a></li>
          <li><a href="#newsletter">Newsletter</a></li>
         </ul>
 
@@ -83,6 +84,30 @@
     
     <div class="swiper-pagination"></div>
     </section>
+
+
+    <section class="movies" id="trending">
+  <h2 class="heading">Trending Movies</h2>
+
+  <!-- Search bar -->
+ <div class="search-bar">
+  <form id="search-form">
+    <input type="text" id="search-input" placeholder="Search movies...">
+    <button type="submit">Search</button>
+  </form>
+</div>
+
+<div id="search-results"></div>
+
+
+
+  <div class="movie-container" id="trending-container">
+    <!-- Movies from TMDB API will load here -->
+  </div>
+
+  
+</section>
+
 
     <!-- Movies -->
 
@@ -344,6 +369,16 @@
     <div class="copyright">
       <p> &#169; Maxin Labs All Rights Reserved. </p>
     </div>
+
+    <!-- Trailer + Details Modal -->
+<div id="trailerModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeTrailer()">&times;</span>
+    <iframe id="trailerFrame" width="100%" height="400" frameborder="0" allowfullscreen></iframe>
+    <div id="movieDetails"></div>
+  </div>
+</div>
+
     
     
     <!-- Swiper JS -->

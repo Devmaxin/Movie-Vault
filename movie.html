@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Movie Details - Movie Vault</title>
+  <link rel="icon" type="image/png" href="img/movie-play .png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
+  <!-- small inline CSS additions (kept minimal so your theme is preserved) -->
+  <style>
+    /* Trailer player */
+    #trailer-wrap { margin: 16px 0; text-align:center; }
+    #trailer-wrap iframe { width:100%; max-width:900px; height:506px; border-radius:8px; border:0; }
+    /* Make cast boxes look like your existing boxes but slightly narrower */
+    #cast-container .box { width: 150px; }
+    #cast-container .box img { height: 220px; object-fit:cover; }
+    /* Similar movies: keep same box design */
+    #similar-container .box img { height: 260px; object-fit:cover; }
+    /* Ensure details box content stacks nicely on small screens */
+    .movie-details-grid { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
+    .movie-details-grid .box { flex: 0 0 250px; }
+    .movie-info { max-width:800px; }
+    .movie-info h3 { margin:0 0 8px 0; }
+    .meta-row { color:#ccc; font-size:0.95rem; margin-bottom:8px; display:block; }
+  </style>
+</head>
+<body>
+
+  <!-- Header: keep simple link back to index (you can adjust to match your header if needed) -->
+   <header>
+        <a href="index.html" class="logo">
+            <i class='bx  bxs-movie-play'></i>  Vault
+        </a>
+        <div class="bx bx-menu"  id="menu-icon"></div>
+
+        <!-- menu -->
+        <ul class="navbar" id="nav-menu">
+         <li><a href="index.html" class="home-active">Home</a></li>
+         <li><a href="index.html#trending">Trending</a></li>
+         <li><a href="index.html#movies">Movies</a></li>
+         <li><a href="index.html#animes">Anime</a></li> 
+         <li><a href="index.html#newsletter">Newsletter</a></li>
+        </ul>
+
+        <a href="inactive.html" class="btn">Sign In</a>
+
+    </header>
+
+  <!-- Movie details area — same design building blocks -->
+  <section class="movies">
+    <h2 class="heading">Movie Details</h2>
+
+    <div class="movie-container" id="movie-main">
+      <!-- main movie box will be injected here -->
+    </div>
+  </section>
+
+  <!-- Trailer -->
+  <section class="movies" id="trailer-section" style="margin-top:12px;">
+    <h2 class="heading">Trailer</h2>
+    <div id="trailer-wrap"></div>
+  </section>
+
+  <!-- Cast -->
+  <section class="movies" id="cast-section" style="margin-top:12px;">
+    <h2 class="heading">Cast</h2>
+    <div class="movie-container" id="cast-container"></div>
+  </section>
+
+  <!-- Similar / recommendations -->
+  <section class="movies" id="similar-section" style="margin-top:12px;">
+    <h2 class="heading">Similar Movies</h2>
+    <div class="movie-container" id="similar-container"></div>
+  </section>
+
+  <script>
+    // movie.html script (self-contained)
+    (function(){
+      const API_KEY = "7b8081a1d5df404f4b4e33b4fa2368ea";
+      const BASE = "https://api.themoviedb.org/3";
+      const IMG = "https://image.tmdb.org/t/p/w500";
+      const NO_POSTER = "img/no-poster.png"; // keep this fallback if you have it
+
+      function $id(n){ return document.getElementById(n); }
+      async function fetchJSON(url){
+        try {
+          const res = await fetch(url);
+          if(!res.ok) throw new Error('network');
+          return await res.json();
+        } catch(err){
+          console.error('fetchJSON error', err, url);
+          return null;
+        }
+      }
+
+      function safeText(t){ return t ? t : ""; }
+      function createBoxHTMLPoster(poster, title, subline){
+        return `
+          <div class="box">
+            <div class="box-img">
+              <img src="${poster}" alt="${title}">
+            </div>
+            <h3>${title}</h3>
+            <span>${subline}</span>
+          </div>`;
+      }
+
+      async function loadMovie(){
+        const params = new URLSearchParams(window.location.search);
+        const movieId = params.get('id');
+        if(!movieId){
+          $id('movie-main').innerHTML = '<p style="color:#ccc">No movie selected (missing ?id=)</p>';
+          return;
+        }
+
+        // single call to get details + videos + credits + recommendations
+        const url = `${BASE}/movie/${movieId}?api_key=${API_KEY}&append_to_response=videos,credits,recommendations`;
+        const data = await fetchJSON(url);
+        if(!data){
+          $id('movie-main').innerHTML = '<p style="color:#ccc">Unable to load movie details.</p>';
+          return;
+        }
+
+        // Main details box (keeps your .box look so design stays identical)
+        const poster = data.poster_path ? (IMG + data.poster_path) : NO_POSTER;
+        const sub = `${data.release_date ? data.release_date.split('-')[0] : 'N/A'} | ⭐ ${data.vote_average ? data.vote_average.toFixed(1) : 'N/A'}`;
+        const genres = data.genres && data.genres.length ? data.genres.map(g=>g.name).join(', ') : '—';
+
+        const mainHTML = `
+          <div class="box" style="width:100%;">
+            <div style="display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap;">
+              <div class="box-img" style="flex:0 0 250px;">
+                <img src="${poster}" alt="${escapeHtml(data.title)}">
+              </div>
+              <div class="movie-info">
+                <h3>${escapeHtml(data.title)}</h3>
+                <span class="meta-row">${escapeHtml(sub)}</span>
+                <span class="meta-row"><strong>Genres:</strong> ${escapeHtml(genres)}</span>
+                <p style="line-height:1.45; margin-top:8px;">${escapeHtml(data.overview)}</p>
+              </div>
+            </div>
+          </div>
+        `;
+        $id('movie-main').innerHTML = mainHTML;
+
+        // Trailer: prefer the first YouTube "Trailer" (fallback to any YouTube video)
+        const vids = (data.videos && data.videos.results) ? data.videos.results : [];
+        const youTubeTrailer = vids.find(v => v.site === "YouTube" && v.type.toLowerCase().includes("trailer"))
+                                || vids.find(v => v.site === "YouTube");
+        if(youTubeTrailer){
+          const embed = document.createElement('iframe');
+          embed.src = `https://www.youtube.com/embed/${youTubeTrailer.key}?rel=0`;
+          embed.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+          embed.allowFullscreen = true;
+          $id('trailer-wrap').innerHTML = '';
+          $id('trailer-wrap').appendChild(embed);
+        } else {
+          $id('trailer-wrap').innerHTML = '<p style="color:#ccc; text-align:center;">No trailer available</p>';
+        }
+
+        // Cast: show top 8
+        const castList = (data.credits && data.credits.cast) ? data.credits.cast.slice(0,12) : [];
+        const castContainer = $id('cast-container');
+        castContainer.innerHTML = '';
+        if(castList.length === 0){
+          castContainer.innerHTML = '<p style="color:#ccc">No cast information.</p>';
+        } else {
+          for(const actor of castList){
+            const profile = actor.profile_path ? (IMG + actor.profile_path) : NO_POSTER;
+            const actorName = escapeHtml(actor.name || 'Unknown');
+            const charName = escapeHtml(actor.character || '');
+            const box = document.createElement('div');
+            box.className = 'box';
+            box.innerHTML = `
+              <div class="box-img">
+                <img src="${profile}" alt="${actorName}">
+              </div>
+              <h3>${actorName}</h3>
+              <span>${charName}</span>
+            `;
+            castContainer.appendChild(box);
+          }
+        }
+
+       // Similar / recommendations
+const recs = (data.recommendations && data.recommendations.results) ? data.recommendations.results.slice(0,12) : [];
+const simContainer = $id('similar-container');
+simContainer.innerHTML = '';
+if(recs.length === 0){
+  simContainer.innerHTML = '<p style="color:#ccc">No similar movies available.</p>';
+} else {
+  recs.forEach(m => {
+    const posterSmall = m.poster_path ? (IMG + m.poster_path) : NO_POSTER;
+    const a = document.createElement('a');
+    a.href = `movie.html?id=${m.id}`;
+    a.innerHTML = `
+      <div class="box">
+        <div class="box-img">
+          <img src="${posterSmall}" alt="${escapeHtml(m.title)}">
+        </div>
+        <h3>${escapeHtml(m.title)}</h3>
+        <span>${m.release_date ? m.release_date.split('-')[0] : ''} | ⭐ ${m.vote_average ? m.vote_average.toFixed(1) : 'N/A'}</span>
+      </div>
+    `;
+    simContainer.appendChild(a);  // ✅ keep <a> wrapper
+  });
+}
+        }
+
+      function escapeHtml(t){ if(!t) return ''; return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+      // load
+      loadMovie();
+    })();
+  </script>
+
+    <!-- Swiper JS -->
+  <script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
+
+  
+
+     
+     <!-- Link to custom js -->
+      <script src="script.js"></script>
+
+
+</body>
+</html>
